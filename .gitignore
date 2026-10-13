@@ -1,0 +1,17 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# In case a future build step is introduced
+node_modules/
+dist/
+build/
+
+# Local env (frontend should never hold secrets, but ignore defensively)
+.env
+.env.*
+!.env.example

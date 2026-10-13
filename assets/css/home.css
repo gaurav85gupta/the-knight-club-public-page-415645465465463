@@ -1,0 +1,1282 @@
+/* ==========================================================================
+   THE NIGHT CLUB — Home Page
+
+   Loaded ONLY by index.html, after tokens/theme/base/site/public.
+   This is the single source of truth for the homepage: structure, the
+   particle hero, and every section below it. (Previously split across
+   home.css + home-futuristic.css as two design eras loaded together —
+   merged into one file so there is exactly one definition per selector.)
+
+   SCOPING RULE: several classes used here (.site-header, .btn, .site-footer,
+   .footer-grid, .brand …) are SHARED with other pages. Every override of a
+   shared class is therefore prefixed with `.home-page`, so courses.html,
+   course.html, about.html etc. are not affected. Homepage-only classes are
+   not shared.
+
+   Colours/spacing come from tokens.css. Literal rgba() values are ambient
+   lighting effects derived from the purple accent family.
+   ========================================================================== */
+
+/* ---- Page-level -------------------------------------------------------- */
+
+.home-page {
+  background: var(--color-bg);
+  overflow-x: clip; /* ambient glows may extend past the viewport; never scroll sideways */
+  --gold: #d9b96a;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: -100px;
+  z-index: 100;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-accent-500);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+}
+.skip-link:focus { top: var(--space-4); color: #fff; }
+
+.home-page :focus-visible {
+  outline: 2px solid var(--color-lavender);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Shared type primitives (homepage) ------------------------------------ */
+
+.home-page .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-6);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-lavender);
+}
+.home-page .eyebrow i { font-style: normal; opacity: 0.5; }
+.home-page .eyebrow-plain { margin-bottom: var(--space-4); color: var(--color-accent-700); }
+.eyebrow-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent-600);
+  box-shadow: 0 0 12px 2px rgba(139, 92, 246, 0.8);
+}
+
+.home-page .section-title {
+  margin: 0;
+  font-size: clamp(1.9rem, 3.4vw, 2.75rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+.home-page .section-title-sm { font-size: clamp(1.75rem, 3.2vw, 2.5rem); }
+.home-page .section-sub {
+  margin: var(--space-4) 0 0;
+  max-width: 46ch;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+  line-height: 1.6;
+}
+
+/* Rhythm: generous but never empty. R1 foundation fix B — desktop vertical
+   rhythm brought down from --space-24 (96px) to --space-16 (64px); the hero
+   itself is sized separately and stays exempt from this. */
+.section-block { padding: var(--space-16) 0; position: relative; }
+.section-tight { padding-top: 0; padding-bottom: var(--space-16); }
+
+.section-head-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  margin-bottom: var(--space-12);
+  flex-wrap: wrap;
+}
+.section-head-center { text-align: center; margin-bottom: var(--space-16); }
+.section-head-center .eyebrow { justify-content: center; }
+
+/* Refined secondary action — deliberately quieter than the heading. */
+.link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-6);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--color-border-soft);
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), gap var(--dur-fast) var(--ease-out);
+}
+.section-head-row .link-arrow { margin-top: 0; }
+.link-arrow:hover { color: var(--color-text); border-color: var(--color-accent-600); gap: var(--space-3); }
+
+/* ---- Buttons (homepage only) ------------------------------------------------
+   Colour, background and hover now live in buttons.css (single source of
+   truth). Size/shape overrides for the homepage's larger CTA buttons stay
+   here since they're layout, not colour. ------------------------------------ */
+
+.home-page .btn-lg { padding: 0.95rem 1.75rem; font-size: 1rem; border-radius: 12px; gap: var(--space-2); }
+
+/* Auth-pending guard for body-level (non-header) auth groups: same signal
+   nav.js already provides — no JS change. Prevents a guest-CTA flash for a
+   signed-in visitor. Degrades to a brief flash on browsers without :has(). */
+.home-page:has(.nav-actions[data-auth-pending]) main [data-auth] {
+  visibility: hidden;
+}
+/* Auth groups in the body flow inline with their sibling buttons. */
+.home-page main [data-auth] { display: contents; }
+.home-page main [data-auth][hidden] { display: none; }
+
+/* ==========================================================================
+   HEADER + FOOTER live in assets/css/public.css (shared by every public page).
+   ========================================================================== */
+
+/* ==========================================================================
+   1. HERO — futuristic particle hero (Vanta.js canvas), with a cinematic
+   sticky-overlap scroll effect: the hero stays pinned while the first
+   section slides up over it (see "CINEMATIC HERO OVERLAP" near the bottom).
+   ========================================================================== */
+
+.home-page .hero.hero-v2 {
+  min-height: 100vh;
+  height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin-top: calc(-1 * var(--pub-header-height));
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--color-bg);
+  /* position & z-index set in the CINEMATIC HERO OVERLAP section below */
+}
+
+/* Vanta canvas sits here */
+#vanta-hero {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* Top purple crown glow */
+.hv3-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -5%, rgba(139, 69, 255, 0.55) 0%, rgba(139, 69, 255, 0.18) 45%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 15% 25%, rgba(99, 40, 220, 0.22) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 40% at 85% 25%, rgba(160, 106, 255, 0.18) 0%, transparent 65%);
+}
+
+/* Subtle scanline overlay for futuristic feel */
+.hero.hero-v2::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(139, 69, 255, 0.045) 2px,
+    rgba(139, 69, 255, 0.045) 4px
+  );
+  pointer-events: none;
+}
+
+/* Bottom fade so hero blends into next section */
+.hero.hero-v2::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 200px;
+  z-index: 2;
+  background: linear-gradient(to bottom, transparent, var(--color-bg));
+  pointer-events: none;
+  display: block;
+}
+
+/* Canvas must always be taken out of flow — without this it renders at its
+   HTML width/height attributes (300x150) as a normal block, pushing
+   .hero-v2-inner to one side and breaking the centering. Dark theme used to
+   set this on its own; light theme had no rule at all. */
+#hero-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  display: block;
+}
+
+.hero-v2-inner {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  will-change: transform, opacity, filter;
+}
+
+.hero-v2-copy {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 var(--space-6);
+  position: relative;
+  z-index: 1;
+  will-change: transform, opacity, filter;
+}
+
+/* Soft dark vignette behind the copy block so the headline always sits on a
+   calm patch, independent of how busy the particle canvas gets underneath */
+.hero-v2-copy::before {
+  content: '';
+  position: absolute;
+  inset: -10% -15%;
+  z-index: -1;
+  background: radial-gradient(ellipse 60% 70% at 50% 40%, rgba(7, 5, 15, 0.55) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Pill badge above headline */
+.hero-v2-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.45rem 1.2rem;
+  border-radius: var(--radius-full);
+  background: rgba(139, 69, 255, 0.12);
+  border: 1px solid rgba(139, 69, 255, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-family: var(--font-family-base);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-lavender);
+  margin: 0 0 var(--space-6);
+  box-shadow: 0 0 24px rgba(139, 69, 255, 0.25);
+}
+
+/* Blinking dot before the tag text */
+.hero-v2-tag::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent-600);
+  box-shadow: 0 0 8px var(--color-accent-500);
+  animation: blink-dot 1.8s ease-in-out infinite;
+}
+@keyframes blink-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Huge headline */
+.home-page .hero h1.hero-v2-title {
+  margin: 0 0 var(--space-6);
+  max-width: none;
+  font-size: clamp(2.8rem, 6.5vw, 5rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  color: var(--color-text);
+  text-wrap: balance;
+  text-shadow:
+    0 0 80px rgba(139, 69, 255, 0.4),
+    0 2px 40px rgba(6, 4, 12, 0.6);
+}
+
+/* Gradient highlight accent word — color fallback precedes the clip trick
+   in case the browser doesn't support background-clip:text */
+.hero-title-accent {
+  color: #a855f7;
+  background: linear-gradient(135deg, #c084fc, #a855f7, #7c3aed);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 30px rgba(139, 69, 255, 0.5));
+}
+
+.hero-v2-lead {
+  margin: 0 0 var(--space-10);
+  max-width: 520px;
+  font-family: var(--font-family-base);
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
+  line-height: 1.7;
+  color: rgba(213, 207, 235, 0.85);
+  text-wrap: balance;
+}
+
+/* CTA buttons */
+.home-page .hero-v2-actions.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+/* Button glow removed — buttons must look identical on every page.
+   All .btn-primary/.btn-outline/.btn-ghost visuals (colour, shadow,
+   hover) live only in assets/css/buttons.css. Do not re-add rules
+   here — see buttons.css's "DO NOT ADD BUTTON COLOUR RULES ELSEWHERE". */
+
+/* Stats strip at bottom of hero */
+.hero-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  margin-top: var(--space-12);
+  flex-wrap: wrap;
+}
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.hero-stat strong {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--color-lavender);
+  line-height: 1;
+}
+.hero-stat span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+.hero-stat-div {
+  width: 1px;
+  height: 32px;
+  background: var(--color-border-soft);
+}
+
+/* Scroll indicator */
+.hero-scroll-hint {
+  position: absolute;
+  bottom: var(--space-8);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  animation: scroll-hint-fade 2s ease-in-out 2s both;
+}
+.hero-scroll-mouse {
+  width: 20px;
+  height: 32px;
+  border: 1.5px solid rgba(192, 160, 255, 0.4);
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  padding-top: 5px;
+}
+.hero-scroll-wheel {
+  width: 3px;
+  height: 6px;
+  background: var(--color-lavender);
+  border-radius: 2px;
+  animation: scroll-wheel 1.8s ease-in-out infinite;
+}
+@keyframes scroll-wheel {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(10px); }
+}
+@keyframes scroll-hint-fade {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ---- Subtle load-in choreography ---- */
+.reveal-up {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: hv2-rise 0.7s var(--ease-out) forwards;
+  animation-delay: var(--d, 0ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-up { animation: none; opacity: 1; transform: none; }
+}
+@keyframes hv2-rise {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   2. EDITORIAL TWO-COLUMN (What is / Why practical)
+   ========================================================================== */
+
+.ed-grid { display: grid; grid-template-columns: 5fr 6fr; gap: var(--space-16); align-items: start; }
+.ed-grid-rev { grid-template-columns: 6fr 5fr; }
+.ed-grid-rev > :first-child { order: 2; }
+.ed-prose p { color: var(--color-text-muted); font-size: 1.0625rem; line-height: 1.75; margin: 0 0 var(--space-5); max-width: 62ch; }
+.ed-quote { margin: var(--space-8) 0 0; padding-left: var(--space-5); border-left: 2px solid var(--gold); font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.5rem; line-height: 1.35; color: var(--color-text); }
+.pill-list { list-style: none; margin: var(--space-6) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.pill-list li { padding: 0.45rem 0.95rem; border: 1px solid var(--color-border-soft); border-radius: var(--radius-full); font-size: var(--font-size-sm); color: var(--color-lavender); }
+
+/* ==========================================================================
+   3. FOUNDER — ScaleToSky-inspired layout (home + about shared)
+   Base .founder-v2-* rules now live in public.css (loaded by both home.css
+   and about.css) — consolidated here as part of R1 foundation fix A.
+   Homepage-only overrides on top of that shared base:
+   ========================================================================== */
+
+/* The homepage photo gets a one-shot 3D entrance via scroll-animations.js'
+   founder reveal (plays once, no scrub); About does not use this treatment,
+   so perspective stays homepage-only rather than moving to the shared base.
+   No will-change here (R1 fix F) — the animation only fires once. */
+.founder-v2-photo-wrap {
+  perspective: 1000px;
+}
+
+/* ==========================================================================
+   4. SKILLS — category cards, plus optional video column
+   ========================================================================== */
+
+.sk-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
+.sk-card { display: flex; flex-direction: column; gap: var(--space-2); height: 100%; padding: var(--space-6); border: 1px solid var(--color-border-soft); border-radius: var(--radius-lg); background: linear-gradient(160deg, rgba(124,58,237,.10), var(--color-surface)); transition: border-color var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); transform-style: preserve-3d; will-change: transform; }
+.sk-card:hover, .sk-card:focus-visible { border-color: var(--color-border-strong); transform: translateY(-3px); }
+.sk-num { font-size: var(--font-size-sm); letter-spacing: .14em; color: var(--gold); }
+.sk-card h3 { margin: var(--space-2) 0 0; font-size: 1.15rem; }
+.sk-card p { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-sm); line-height: 1.6; }
+
+/* ---- SKILLS SECTION VIDEO (Central Placeholders System — home.skills.video)
+   The video lives in the same #skills section as the skill cards.
+   Desktop layout: heading + cards on the left, video on the right.
+   Mobile: heading → video → cards, stacked full-width.
+
+   .sk-layout       — two-column wrapper replacing the direct .container > .sk-grid pattern.
+   .sk-content-col  — left column: heading + cards.
+   .sk-video-col    — right column: video (or placeholder when not configured).
+   #skills-video-wrap — the live target JS populates (four states below). ---- */
+
+.sk-layout {
+  display: grid;
+  grid-template-columns: 1fr 420px; /* cards + video side-by-side on desktop */
+  gap: var(--space-10);
+  align-items: start;
+}
+
+
+/* Video column — card-style surface that matches the skill cards */
+.sk-video-col {
+  position: sticky;
+  top: var(--space-8);
+  /* Sticky only makes sense at larger viewports; collapsed below */
+}
+
+/* Full-width video when skill cards are removed */
+.sk-video-col.sk-video-full {
+  position: static;
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ---- Video container (inner wrapper for border + background) ---- */
+#skills-video-wrap {
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--color-border-soft);
+  background: linear-gradient(160deg, rgba(124,58,237,.10), var(--color-surface));
+  min-height: 200px; /* prevents zero-height before JS runs */
+  transition: border-color var(--dur-base) var(--ease-out);
+}
+
+#skills-video-wrap:focus-within {
+  border-color: var(--color-border-strong);
+}
+
+/* ── STATE: LOADING ── */
+#skills-video-wrap[data-sv-state="loading"] {
+  border-color: var(--color-border-soft);
+}
+
+.sv-skeleton {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 */
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-2);
+}
+
+.sv-skeleton-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(192, 160, 255, 0.12) 40%,
+    rgba(192, 160, 255, 0.22) 50%,
+    rgba(192, 160, 255, 0.12) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: sv-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes sv-shimmer {
+  0%   { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── STATE: CONFIGURED — 16:9 Bunny iframe ── */
+#skills-video-wrap[data-sv-state="configured"] {
+  border-color: var(--color-border-strong);
+}
+
+.sv-ratio {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 */
+  height: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+}
+
+.sv-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: #000;
+}
+
+/* ── STATE: EMPTY (not configured) ── */
+.sv-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-10) var(--space-6);
+  text-align: center;
+  min-height: 220px;
+}
+
+.sv-empty-icon {
+  color: var(--color-accent-700);
+  opacity: 0.6;
+  margin-bottom: var(--space-2);
+}
+
+.sv-empty-title {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.sv-empty-desc {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  max-width: 28ch;
+  line-height: 1.6;
+}
+
+/* ── STATE: ERROR ── */
+.sv-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-6);
+  min-height: 160px;
+  text-align: center;
+}
+
+.sv-error p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* R1 foundation fix I: !important removed from all four declarations below.
+   This selector (0,2,0 specificity) already beats the base #skills-video-wrap
+   rule (0,1,0) on its own, and for the one property it shares with
+   #skills-video-wrap[data-sv-state="configured"] (also 0,2,0) — border-color
+   — this rule comes later in the same file, so normal cascade order already
+   resolves it the same way !important was forcing. Kept entirely within
+   home.css; no change to site.css or theme-futuristic.css. */
+html[data-site-theme="light"] #skills-video-wrap {
+  background: #ffffff;
+  border-color: rgba(109, 61, 245, 0.16);
+  box-shadow: 0 14px 34px -22px rgba(28, 21, 48, 0.35);
+}
+
+html[data-site-theme="light"] #skills-video-wrap[data-sv-state="configured"] {
+  border-color: rgba(109, 61, 245, 0.38);
+}
+
+html[data-site-theme="light"] .sv-skeleton {
+  background: var(--color-surface-2);
+}
+
+html[data-site-theme="light"] .sv-skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(109, 61, 245, 0.08) 40%,
+    rgba(109, 61, 245, 0.15) 50%,
+    rgba(109, 61, 245, 0.08) 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+html[data-site-theme="light"] .sv-empty-icon {
+  color: var(--color-accent-600);
+}
+
+html[data-site-theme="light"] .sv-empty-title {
+  color: var(--color-text);
+}
+
+html[data-site-theme="light"] .sv-empty-desc,
+html[data-site-theme="light"] .sv-error p {
+  color: var(--color-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sv-skeleton-shimmer { animation: none; }
+  #skills-video-wrap { transition: none; }
+}
+
+/* ==========================================================================
+   5. FEATURED COURSES — premium cards
+   ========================================================================== */
+
+.hc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.hc-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(160deg, var(--color-surface-2), var(--color-surface));
+  border: 1px solid var(--color-border-soft);
+  box-shadow: 0 0 0 1px rgba(192, 160, 255, 0.06) inset, 0 1px 0 rgba(192, 160, 255, 0.08) inset, 0 20px 50px -30px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+  color: var(--color-text);
+  transition: transform 280ms var(--ease-out), border-color 280ms var(--ease-out), box-shadow 280ms var(--ease-out);
+}
+.hc-card:hover { color: var(--color-text); }
+
+/* Entrance — same stagger pattern as the courses listing page (.cc-card),
+   so Featured Courses on the homepage matches it instead of appearing
+   static. Gated by prefers-reduced-motion; plays once per paint. */
+@media (prefers-reduced-motion: no-preference) {
+  .hc-card:not(.hc-skeleton) {
+    animation: card-rise 450ms var(--ease-out) both;
+  }
+  .hc-card:nth-child(1) { animation-delay: 0ms; }
+  .hc-card:nth-child(2) { animation-delay: 70ms; }
+  .hc-card:nth-child(3) { animation-delay: 140ms; }
+  .hc-card:nth-child(4) { animation-delay: 210ms; }
+  .hc-card:nth-child(5) { animation-delay: 280ms; }
+  .hc-card:nth-child(6) { animation-delay: 350ms; }
+}
+
+.hc-thumb { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: var(--color-surface-2); }
+.hc-thumb img,
+.hc-thumb .thumb-art {
+  width: 100%; height: 100%;
+}
+.hc-thumb img { object-fit: cover; }
+/* bottom scrim so the badges stay legible on any image */
+.hc-thumb::after {
+  content: ''; position: absolute; inset: auto 0 0 0; height: 45%;
+  background: linear-gradient(180deg, transparent, var(--color-scrim-thumb));
+  pointer-events: none;
+}
+
+.hc-badges { position: absolute; left: var(--space-3); bottom: var(--space-3); z-index: 2; display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.hc-badge {
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.65rem; font-weight: 600; letter-spacing: 0.02em;
+  color: var(--color-text);
+  background: var(--color-scrim-card);
+  border: 1px solid var(--color-border-soft);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.hc-badge-cat { color: var(--color-lavender); border-color: rgba(167, 139, 250, 0.3); }
+
+.hc-body { display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-4) var(--space-5) var(--space-5); flex: 1; }
+.hc-title {
+  margin: 0;
+  font-size: 1.05rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.02em;
+  display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* Card is an <article>, not a nested-link <a>: the title link covers the card. */
+.hc-title a::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+.hc-instructor { margin: 0; font-size: 0.8125rem; color: var(--color-text-muted); }
+.hc-desc { margin: var(--space-1) 0 0; color: var(--color-text-muted); font-size: 0.8125rem; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hc-foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: var(--space-3); }
+.hc-price { display: inline-flex; align-items: baseline; gap: var(--space-2); }
+.hc-price-now { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; }
+.hc-price-was { font-size: 0.8125rem; color: var(--color-text-muted); text-decoration: line-through; }
+.hc-off { margin-left: var(--space-2); font-size: .7rem; font-weight: 600; color: var(--gold); }
+.hc-go {
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  color: var(--color-lavender);
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid var(--color-border-soft);
+}
+.hc-cta-slot { position: relative; z-index: 2; }
+.hc-cta { display: inline-flex; align-items: center; padding: 0.4rem var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); font-size: 0.8125rem; font-weight: 600; color: var(--color-text); transition: background 160ms var(--ease-out), border-color 160ms var(--ease-out), color 160ms var(--ease-out); }
+.hc-cta:hover { background: linear-gradient(135deg, var(--bx-from) 0%, var(--bx-via) 50%, var(--bx-to) 100%); border-color: transparent; color: #fff; }
+.hc-cta-owned { background: linear-gradient(135deg, var(--bx-from) 0%, var(--bx-via) 50%, var(--bx-to) 100%); border-color: transparent; color: #fff; }
+.hc-cta-owned:hover { background: linear-gradient(135deg, var(--bx-from-h) 0%, var(--bx-via-h) 50%, var(--bx-to-h) 100%); }
+
+/* Hover only on devices that can hover — avoids sticky-hover on touch.
+   Colour/shadow change only — no movement or scaling. */
+@media (hover: hover) {
+  .hc-card:hover {
+    border-color: var(--color-border-strong);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 34px 70px -28px rgba(124, 58, 237, 0.5), 0 0 60px -20px rgba(124, 58, 237, 0.35);
+  }
+  .hc-card:hover .hc-go { background: var(--color-accent-500); color: #fff; }
+}
+.hc-card:focus-visible { border-color: var(--color-lavender); }
+
+/* Skeleton + states */
+.hc-skeleton { pointer-events: none; }
+.hc-skeleton .hc-thumb { border-radius: 0; }
+.sk-line { height: 14px; border-radius: 6px; }
+.sk-short { width: 55%; }
+.sk-price { width: 30%; height: 20px; margin-top: var(--space-4); }
+.hc-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--space-16) var(--space-6);
+  border: 1px dashed var(--color-border-soft);
+  border-radius: var(--radius-xl);
+  background: var(--color-scrim-soft);
+}
+.hc-state h3 { margin: 0 0 var(--space-2); }
+.hc-state p { margin: 0 auto var(--space-6); max-width: 44ch; color: var(--color-text-muted); }
+.hc-state p:last-child { margin-bottom: 0; }
+
+/* ---- Generated thumbnail fallback (no image) ---------------------------------------
+   Driven by inline custom props (--art-hue, --art-x, --art-y) set from a hash
+   of the course, so each card is distinct but stays inside the brand's
+   purple family. */
+
+.thumb-art {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at var(--art-x, 30%) var(--art-y, 25%), hsl(var(--art-hue, 262) 85% 62% / 0.55), transparent 58%),
+    radial-gradient(circle at 85% 90%, hsl(calc(var(--art-hue, 262) + 24) 80% 55% / 0.22), transparent 55%),
+    linear-gradient(155deg, #1d1538 0%, #120c26 100%);
+}
+/* subtle fine grid texture */
+.thumb-art::before {
+  content: ''; position: absolute; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(196, 181, 253, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(196, 181, 253, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000, transparent 78%);
+  mask-image: radial-gradient(circle at 50% 50%, #000, transparent 78%);
+}
+.art-shape { position: absolute; z-index: 0; pointer-events: none; }
+.art-shape-a { border: 1px solid rgba(196, 181, 253, 0.22); }
+.art-shape-b { background: linear-gradient(135deg, rgba(196, 181, 253, 0.16), rgba(124, 58, 237, 0.02)); border: 1px solid rgba(196, 181, 253, 0.12); }
+
+/* four deterministic geometric compositions */
+.art-v0 .art-shape-a { width: 62%; aspect-ratio: 1; border-radius: 50%; right: -14%; top: -30%; }
+.art-v0 .art-shape-b { width: 38%; aspect-ratio: 1; border-radius: 50%; left: -8%; bottom: -26%; }
+.art-v1 .art-shape-a { width: 54%; aspect-ratio: 1; border-radius: 22%; transform: rotate(18deg); right: -8%; bottom: -34%; }
+.art-v1 .art-shape-b { width: 30%; aspect-ratio: 1; border-radius: 50%; left: 8%; top: -16%; }
+.art-v2 .art-shape-a { width: 70%; height: 1px; border: 0; background: linear-gradient(90deg, transparent, rgba(196, 181, 253, 0.35), transparent); left: 8%; top: 34%; transform: rotate(-14deg); }
+.art-v2 .art-shape-b { width: 46%; aspect-ratio: 1; border-radius: 50%; right: -12%; bottom: -30%; }
+.art-v3 .art-shape-a { width: 46%; aspect-ratio: 1; transform: rotate(45deg); border-radius: 14%; left: -12%; top: -24%; }
+.art-v3 .art-shape-b { width: 58%; aspect-ratio: 1; border-radius: 50%; right: -18%; bottom: -36%; }
+
+.art-initials {
+  position: absolute; z-index: 1; left: var(--space-5); top: 50%;
+  transform: translateY(-58%);
+  font-size: clamp(3.2rem, 7vw, 4.6rem);
+  font-weight: 800; letter-spacing: -0.06em; line-height: 1;
+  color: transparent;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, rgba(196, 181, 253, 0.55) 55%, rgba(167, 139, 250, 0.22) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 6px 24px rgba(124, 58, 237, 0.55));
+}
+.art-label {
+  position: absolute; z-index: 1; right: var(--space-4); top: var(--space-4);
+  font-size: 0.62rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+  color: rgba(196, 181, 253, 0.6);
+}
+/* In the hero the card already shows the category as text; hide the duplicate. */
+.thumb-art-hero .art-label { display: none; }
+
+/* ==========================================================================
+   6. ECOSYSTEM — course-level vs membership-only
+   ========================================================================== */
+
+.eco-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); }
+.eco-col { padding: var(--space-8); border: 1px solid var(--color-border-soft); border-radius: var(--radius-lg); background: var(--color-glass); }
+.eco-col-club { border-color: var(--color-border-strong); background: linear-gradient(160deg, rgba(124,58,237,.18), var(--color-surface)); }
+.eco-col h3 { margin: 0 0 var(--space-5); font-size: 1.25rem; display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.eco-flag { font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(217,185,106,.4); border-radius: var(--radius-full); padding: .2rem .6rem; }
+.eco-col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+.eco-col li { color: var(--color-text-muted); line-height: 1.6; }
+.eco-col li strong { display: block; color: var(--color-text); }
+
+/* ==========================================================================
+   7. AUDIENCE — open text tiles with a top hairline (deliberately not cards)
+   ========================================================================== */
+
+.aud-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+.aud-grid li {
+  position: relative;
+  padding: var(--space-6) var(--space-6) var(--space-6) calc(var(--space-6) + 3px);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-left: 3px solid var(--color-accent-500);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--dur-base) var(--ease-out),
+              box-shadow var(--dur-base) var(--ease-out);
+}
+.aud-grid li:hover {
+  border-left-color: var(--color-accent-600);
+  box-shadow: var(--shadow-md);
+}
+.aud-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-bottom: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-50);
+  color: var(--color-accent-600);
+}
+.aud-grid h3 {
+  margin: 0 0 var(--space-2);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.aud-grid p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+/* ==========================================================================
+   8. LEARN / APPLY / BUILD / GROW — one connected rail, not cards
+   ========================================================================== */
+
+.flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-8); counter-reset: none; }
+.flow li { position: relative; padding-top: var(--space-6); border-top: 1px solid var(--color-border-strong); }
+.flow li::before { content: ""; position: absolute; top: -4px; left: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--color-accent-600); box-shadow: 0 0 12px var(--color-accent-500); }
+.flow-num { font-size: var(--font-size-sm); letter-spacing: .14em; color: var(--gold); }
+.flow h3 { margin: var(--space-2) 0 var(--space-2); font-size: 1.5rem; }
+.flow p { margin: 0; color: var(--color-text-muted); line-height: 1.65; }
+
+/* ==========================================================================
+   9. 1% CLUB TEASER — exclusive, atmospheric, not a pricing card
+   ========================================================================== */
+
+.club-panel {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 0.6fr) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16);
+  border-radius: 32px;
+  border: 1px solid var(--color-border-strong);
+  background:
+    radial-gradient(900px 500px at 90% 10%, rgba(124, 58, 237, 0.32), transparent 65%),
+    linear-gradient(180deg, rgba(30, 18, 58, 0.95), rgba(15, 10, 30, 0.98));
+  box-shadow: 0 0 0 1px rgba(192, 160, 255, 0.12), inset 0 1px 0 rgba(192, 160, 255, 0.10);
+}
+
+/* Spinning gradient border accent.
+   R1 foundation fix G: home.js observes #club and toggles .kc-anim-paused
+   on it while the section is off-screen (plus up-front on reduced-motion /
+   low-power), so these two infinite loops (this one and .club-mark below)
+   don't keep repainting for the rest of the page's scroll. The animation
+   still runs by default with no JS — .kc-anim-paused only ever *removes*
+   it. will-change is scoped to the :not(.kc-anim-paused) state so the GPU
+   layer is released while paused instead of being held permanently. */
+.club-panel::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 33px;
+  background: linear-gradient(135deg, rgba(139, 69, 255, 0.5), transparent 40%, rgba(192, 160, 255, 0.3) 70%, transparent);
+  z-index: -1;
+  animation: border-spin 6s linear infinite;
+}
+#club.kc-anim-paused .club-panel::before { animation-play-state: paused; }
+@keyframes border-spin {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+.club-mark {
+  font-size: clamp(4.5rem, 10vw, 8rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  color: transparent;
+  background: linear-gradient(160deg, rgba(255,255,255,0.95) 0%, rgba(196, 181, 253, 0.6) 50%, rgba(124, 58, 237, 0.3) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 8px 40px rgba(124, 58, 237, 0.55));
+  animation: float-text 4s ease-in-out infinite;
+}
+#club:not(.kc-anim-paused) .club-mark { will-change: transform; }
+#club.kc-anim-paused .club-mark { animation-play-state: paused; }
+@keyframes float-text {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .club-panel::before,
+  .club-mark { animation: none; }
+}
+
+.club-copy h2 {
+  margin: 0 0 var(--space-4);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.club-copy p {
+  margin: 0 0 var(--space-8);
+  max-width: 44ch;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-base);
+  line-height: 1.7;
+}
+
+/* ==========================================================================
+   10. TESTIMONIALS TEASER — honest "coming soon" preview, no fake data
+   ========================================================================== */
+
+.tm-teaser {
+  text-align: center;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: var(--space-16) var(--space-8);
+  border-radius: 32px;
+  border: 1px dashed rgba(139, 69, 255, 0.25);
+  background: var(--color-scrim-soft);
+}
+.tm-teaser .eyebrow { justify-content: center; }
+.tm-teaser-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: var(--space-5);
+  border-radius: 14px;
+  font-size: 1.5rem;
+  color: var(--color-lavender);
+  background: linear-gradient(160deg, rgba(139, 92, 246, 0.18), rgba(139, 92, 246, 0.04));
+  border: 1px solid var(--color-border-soft);
+}
+.tm-teaser h3 { margin: 0 0 var(--space-3); font-size: clamp(1.4rem, 2.4vw, 1.9rem); letter-spacing: -0.02em; }
+.tm-teaser p { margin: 0 auto var(--space-6); max-width: 44ch; color: var(--color-text-muted); line-height: 1.6; }
+
+/* ==========================================================================
+   11. FINAL CTA
+   ========================================================================== */
+
+.section-cta { padding-bottom: var(--space-16); }
+.cta-panel {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  text-align: center;
+  padding: var(--space-16) var(--space-8);
+  border-radius: 32px;
+  border: 1px solid var(--color-border-strong);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(139, 69, 255, 0.28) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(99, 40, 220, 0.22) 0%, transparent 70%),
+    linear-gradient(180deg, rgba(30, 18, 58, 0.95), rgba(15, 10, 30, 0.98));
+  box-shadow: 0 0 0 1px rgba(192, 160, 255, 0.12), inset 0 1px 0 rgba(192, 160, 255, 0.10);
+}
+
+/* Animated grid lines behind CTA */
+.cta-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(139, 69, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 69, 255, 0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+.cta-panel > * { position: relative; z-index: 1; }
+
+.cta-glow {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 100%;
+  width: 1200px;
+  height: 800px;
+  transform: translate(-50%, -58%);
+  background: radial-gradient(closest-side, rgba(139, 69, 255, 0.65), rgba(139, 69, 255, 0.2) 52%, transparent 76%);
+  filter: blur(14px);
+}
+.cta-panel h2 {
+  margin: 0 0 var(--space-4);
+  font-size: clamp(2.2rem, 5vw, 3.75rem);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+}
+.cta-panel p {
+  margin: 0 auto var(--space-10);
+  max-width: 40ch;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+}
+.cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* ==========================================================================
+   SCROLL REVEAL — progressive enhancement.
+   `.js-reveal` is added to <html> by home.js ONLY when motion is allowed, so
+   content is always visible without JS / with reduced motion.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  .js-reveal .reveal { opacity: 0; transform: translateY(18px); transition: opacity 640ms var(--ease-out), transform 640ms var(--ease-out); }
+  .js-reveal .reveal.is-in { opacity: 1; transform: none; }
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .founder-v2-panel { gap: var(--space-12); }
+  .club-panel { padding: var(--space-12); gap: var(--space-8); }
+  .sk-grid { grid-template-columns: repeat(2, 1fr); }
+  .flow { grid-template-columns: repeat(2, 1fr); }
+  .aud-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 1024px) {
+  .sk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sk-grid li:first-child,
+  .sk-grid li:last-child { grid-column: span 2; }
+  .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+  .flow::before,
+  .flow::after { display: none; }
+  .sk-layout {
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
+  .sk-video-col {
+    position: static; /* disable sticky when stacked */
+    order: -1; /* heading → video → cards */
+  }
+  #skills-video-wrap {
+    max-width: 640px; /* cap it so it doesn't span an 1100px-wide full-width */
+  }
+}
+
+/* Tablet: hero stacks; 2 course columns. */
+@media (max-width: 768px) {
+  .section-block { padding: var(--space-12) 0; }
+  .section-tight { padding-bottom: var(--space-12); }
+  .home-page .hero.hero-v2 { min-height: 700px; height: auto; }
+  .hero-v2-copy { max-width: 720px; }
+  .hc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+  /* .founder-v2-panel / .founder-v2-card tablet stacking now in public.css */
+  .club-panel { grid-template-columns: 1fr; text-align: center; }
+  .club-mark { text-align: center; justify-self: center; }
+  .club-copy p { margin: 0 auto var(--space-8); }
+}
+
+@media (max-width: 768px) {
+  .ed-grid, .ed-grid-rev, .eco-grid { grid-template-columns: 1fr; gap: var(--space-8); }
+  .ed-grid-rev > :first-child { order: 0; }
+}
+
+/* Mobile: single column throughout.
+   Kept at 640px (not folded into 480/768) as a genuine third collapse step:
+   768px above only stacks the tablet 2-col panels, while this is the full
+   mobile single-column treatment for hero/flow/sk-grid/aud-grid — merging it
+   into either neighbor would leave those grids 2-column through part of the
+   480-768px phone/tablet range, a real visual regression there. */
+@media (max-width: 640px) {
+  .home-page .hero.hero-v2 { min-height: 100svh; }
+
+  .home-page .hero h1.hero-v2-title { font-size: clamp(2.3rem, 10vw, 3.2rem); }
+  .section-block { padding: var(--space-8) 0; }
+  .section-head-row { margin-bottom: var(--space-8); }
+  .section-head-center { margin-bottom: var(--space-12); }
+
+  .sk-grid { grid-template-columns: 1fr; }
+  .sk-grid li:first-child,
+  .sk-grid li:last-child { grid-column: span 1; }
+  .flow { grid-template-columns: 1fr; gap: var(--space-6); max-width: 380px; }
+  .flow::before, .flow::after { display: none; }
+  .flow li { text-align: left; display: grid; grid-template-columns: 80px 1fr; align-items: start; gap: var(--space-4); }
+  .flow-num { grid-row: 1 / span 2; }
+  .aud-grid { grid-template-columns: 1fr; }
+  .hero-stats { flex-direction: column; gap: var(--space-4); }
+  .hero-stat-div { width: 40px; height: 1px; }
+
+  .hc-grid { grid-template-columns: 1fr; gap: var(--space-4); }
+
+  .club-panel { padding: var(--space-10) var(--space-5); border-radius: var(--radius-xl); }
+  .cta-panel { padding: var(--space-16) var(--space-5); border-radius: var(--radius-xl); }
+  .cta-actions { flex-direction: column; align-items: stretch; }
+  .cta-actions .btn { width: 100%; }
+  .home-page .hero-v2-actions.hero-actions { flex-direction: column; align-items: stretch; width: 100%; max-width: 320px; }
+  .home-page .hero-v2-actions .btn { width: 100%; }
+  .hero-scroll-hint { display: none; }
+  .tm-teaser { padding: var(--space-10) var(--space-5); border-radius: var(--radius-xl); }
+
+  #skills-video-wrap {
+    max-width: none;
+  }
+  .eco-col { padding: var(--space-6); }
+  /* .founder-v2-traits single-column collapse now in public.css */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk-card { transition: none; }
+  .sk-card:hover { transform: none; }
+}
+
+/* ==========================================================================
+   CINEMATIC HERO OVERLAP — Hero stays sticky, content slides up over it
+   ========================================================================== */
+
+/* ---- Smooth scroll ---- */
+html { scroll-behavior: smooth; }
+
+/* ---- Hero: pinned behind the page; sections slide up over it ----
+   The hero stays stuck at the top while the next sections (opaque, z-index 1)
+   scroll over it. scroll-animations.js fades/blurs the hero copy as it gets
+   covered, then hides the hero once the first section fully covers the
+   viewport, so it can never ghost through later sections. */
+.home-page .hero.hero-v2 {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 0 !important;
+  max-height: none !important;
+}
+
+/* ---- Main layout ---- */
+main#main {
+  position: relative;
+}
+
+/* ---- Sections: opaque + stacked above the pinned hero ---- */
+section.section-block {
+  position: relative;
+  will-change: auto;
+  transform-origin: center top;
+  z-index: 1;
+  background: var(--color-bg);
+}
+
+/* All sections: no radius, no border, no shadow */
+section#what-is,
+section.section-block {
+  border-radius: 0;
+  overflow: visible;
+  border-top: none;
+  box-shadow: none;
+}
+
+/* First section after the hero: soft shadow so the overlap reads as depth */
+main#main > section#founder.section-block {
+  box-shadow: 0 -28px 60px -18px rgba(0, 0, 0, 0.55);
+}
+html[data-site-theme="light"] main#main > section#founder.section-block {
+  box-shadow: 0 -24px 50px -22px rgba(28, 21, 48, 0.28);
+}
+
+/* Reduced motion: plain flow, no pinning */
+@media (prefers-reduced-motion: reduce) {
+  .home-page .hero.hero-v2 { position: relative !important; }
+}
+
+/* R1 foundation fix F: .section-title and .faq-list .faq-item previously
+   carried permanent will-change hints here, but both only ever animate once
+   on their GSAP scroll-reveal entrance (toggleActions: 'play none none
+   none') — a static hint bought nothing after that and just reserved GPU
+   compositing layers for the rest of the page's life. Removed. */
+
+/* will-change: transform removed from buttons — that hint existed only
+   to support the magnetic-button JS, which has been removed. Buttons
+   must not declare transform/will-change outside buttons.css. */
+.link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* R1 foundation fix F: these also only ever play one GSAP entrance
+   (toggleActions: 'play none none none'), so no permanent will-change. */

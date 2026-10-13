@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg" />
+  <link rel="icon" type="image/png" href="../assets/images/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../assets/images/apple-touch-icon.png" />
+  <script src="../assets/js/perf-mode.js"></script>
+  <title>Sign in — The Knight Club</title>
+  <meta name="description" content="Sign in to your The Knight Club student account." />
+  <meta name="robots" content="noindex" />
+    <link rel="stylesheet" href="../assets/fonts/coolvetica.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,300;1,400;1,500&family=Poppins:wght@300;400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="../assets/css/tokens.css" />
+  <link rel="stylesheet" href="../assets/css/theme.css" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="../assets/css/auth.css" />
+  <link rel="stylesheet" href="../assets/css/buttons.css" />
+</head>
+<body class="auth-page">
+
+  <header class="container site-header">
+    <a class="brand" href="../index.html">The <span>Knight Club</span></a>
+    <nav class="site-nav" aria-label="Account">
+      <a href="courses.html" class="text-muted">Courses</a>
+      <a href="signup.html" class="btn btn-outline btn-sm">Create account</a>
+    </nav>
+  </header>
+
+  <main class="auth-main">
+    <section class="auth-card" aria-labelledby="login-title">
+      <h1 id="login-title">Welcome back</h1>
+      <p class="lead">Sign in with your User ID and password.</p>
+
+      <div id="form-alert" class="alert" role="alert" hidden></div>
+
+      <form id="login-form" novalidate autocomplete="on">
+        <div class="form-grid">
+
+          <div class="field">
+            <label for="userId">User ID</label>
+            <input class="input" id="userId" name="userId" type="text" inputmode="text"
+                   autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"
+                   maxlength="100" required aria-describedby="userId-error" />
+            <p class="field-error" id="userId-error" aria-live="polite"></p>
+          </div>
+
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="password-wrap">
+              <input class="input" id="password" name="password" type="password"
+                     autocomplete="current-password" maxlength="128" required
+                     aria-describedby="password-error" />
+              <button type="button" class="toggle-password" aria-pressed="false" aria-label="Show or hide password">Show</button>
+            </div>
+            <p class="field-error" id="password-error" aria-live="polite"></p>
+          </div>
+
+          <div class="field">
+            <button class="btn btn-primary btn-block" id="submit-btn" type="submit">
+              <span class="spinner" aria-hidden="true"></span>
+              <span class="label">Sign in</span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <p class="auth-alt">New here? <a href="signup.html">Create an account</a></p>
+    </section>
+  </main>
+
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/forms.js"></script>
+  <script src="../assets/js/login.js"></script>
+</body>
+</html>
